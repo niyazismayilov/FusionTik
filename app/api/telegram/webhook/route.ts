@@ -11,7 +11,7 @@ import {
 } from "@/lib/telegram"
 
 const BOT_USERNAME = "tik_save_videosbot"
-const CHANNEL_USERNAME = process.env.TELEGRAM_CHANNEL_USERNAME || "your_channel" // Update this with your channel username
+const CHANNEL_USERNAME = process.env.TELEGRAM_CHANNEL_USERNAME || "tik_save_videosbot"
 
 export async function POST(req: Request) {
   try {

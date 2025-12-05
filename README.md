@@ -112,7 +112,20 @@ FusionTik includes a Telegram bot that allows users to download TikTok videos di
    
    Once your application is deployed, set the webhook URL:
    
-   **Option A: Using the API endpoint**
+   **Option A: Using the Web Interface (Easiest)**
+   
+   Visit `/webhook` page on your deployed site:
+   ```
+   https://your-domain.com/webhook
+   ```
+   
+   The page provides a user-friendly interface to:
+   - View current webhook status
+   - Set or update webhook URL
+   - Check for errors
+   - Monitor pending updates
+   
+   **Option B: Using the API endpoint**
    ```bash
    curl -X POST https://your-domain.com/api/telegram/set-webhook \
      -H "Content-Type: application/json" \

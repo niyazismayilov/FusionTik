@@ -9,7 +9,7 @@ Create a `.env.local` file in the root directory:
 ```env
 TELEGRAM_BOT_TOKEN=8506385037:AAECCbrD9LO5gZ2pTNtEoiU5a8ZWOxOR5Qg
 NEXT_PUBLIC_BASE_URL=https://your-domain.com
-TELEGRAM_CHANNEL_USERNAME=your_channel_username
+TELEGRAM_CHANNEL_USERNAME=tik_save_videosbot
 ```
 
 **Note:** Replace `your_channel_username` with your actual Telegram channel username (without @)
@@ -26,9 +26,20 @@ Deploy your Next.js application to a hosting service that supports HTTPS (requir
 
 ### 3. Set Up Webhook
 
-After deployment, set the webhook URL using one of these methods:
+After deployment, you can set the webhook URL using one of these methods:
 
-#### Method 1: Using the API Endpoint (Recommended)
+#### Method A: Using the Web Interface (Recommended)
+
+1. Visit your deployed application
+2. Go to `/webhook` page (e.g., `https://your-domain.com/webhook`)
+3. The page will automatically detect your current webhook status
+4. Enter or confirm the webhook URL
+5. Click "Set Webhook" button
+6. Check the status to verify it's working
+
+#### Method B: Using API Endpoints
+
+#### Method 1: Using the API Endpoint
 
 ```bash
 curl -X POST https://your-domain.com/api/telegram/set-webhook \
@@ -36,13 +47,13 @@ curl -X POST https://your-domain.com/api/telegram/set-webhook \
   -d '{"url": "https://your-domain.com/api/telegram/webhook"}'
 ```
 
-#### Method 2: Using GET Request
+#### Method 3: Using GET Request
 
 ```bash
 curl "https://your-domain.com/api/telegram/set-webhook?url=https://your-domain.com/api/telegram/webhook"
 ```
 
-#### Method 3: Direct Telegram API
+#### Method 4: Direct Telegram API
 
 ```bash
 curl -X POST "https://api.telegram.org/bot8506385037:AAECCbrD9LO5gZ2pTNtEoiU5a8ZWOxOR5Qg/setWebhook" \
