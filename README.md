@@ -82,6 +82,98 @@ Customize the port:
 PORT=8080 npm run start
 ```
 
+## 🤖 Telegram Bot Setup
+
+FusionTik includes a Telegram bot that allows users to download TikTok videos directly from Telegram!
+
+### Bot Features
+
+- 📱 Send TikTok URLs to the bot
+- 🎬 Receive downloaded videos without watermarks
+- 🖼️ Support for image posts
+- ⚡ Fast processing and delivery
+- 🆓 Completely free to use
+
+### Setup Instructions
+
+1. **Get your Telegram Bot Token**
+   - Create a bot with [@BotFather](https://t.me/botfather) on Telegram
+   - Save your bot token
+
+2. **Configure Environment Variables**
+   
+   Create a `.env.local` file in the root directory:
+   ```env
+   TELEGRAM_BOT_TOKEN=your_bot_token_here
+   NEXT_PUBLIC_BASE_URL=https://your-domain.com
+   ```
+
+3. **Set Up Webhook**
+   
+   Once your application is deployed, set the webhook URL:
+   
+   **Option A: Using the API endpoint**
+   ```bash
+   curl -X POST https://your-domain.com/api/telegram/set-webhook \
+     -H "Content-Type: application/json" \
+     -d '{"url": "https://your-domain.com/api/telegram/webhook"}'
+   ```
+   
+   **Option B: Using GET request**
+   ```bash
+   curl "https://your-domain.com/api/telegram/set-webhook?url=https://your-domain.com/api/telegram/webhook"
+   ```
+   
+   **Option C: Direct Telegram API call**
+   ```bash
+   curl -X POST "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook" \
+     -H "Content-Type: application/json" \
+     -d '{"url": "https://your-domain.com/api/telegram/webhook"}'
+   ```
+
+4. **Test Your Bot**
+   - Open your bot on Telegram: `t.me/your_bot_username`
+   - Send `/start` to begin
+   - Send a TikTok URL to test
+
+### API Endpoints
+
+- **Webhook Endpoint:** `POST /api/telegram/webhook`
+  - Receives updates from Telegram
+  - Processes TikTok URLs and sends videos
+
+- **Set Webhook:** `POST /api/telegram/set-webhook`
+  - Configures the Telegram webhook URL
+  - Accepts `{"url": "https://..."}` in body
+
+- **TikTok API (for bots):** `GET /api/tiktok/telegram?url=<tiktok_url>`
+  - Returns video URL in bot-friendly format
+  - Also supports POST with JSON body
+
+### Bot Commands
+
+- `/start` - Welcome message and instructions
+- `/help` - Show help information
+- Send any TikTok URL to download the video
+
+### Example Usage
+
+Users can simply send a TikTok URL to your bot:
+```
+https://www.tiktok.com/@username/video/1234567890
+```
+
+The bot will:
+1. Process the URL
+2. Download the video
+3. Send it back to the user with caption
+
+### Troubleshooting
+
+- **Webhook not working?** Make sure your server has HTTPS (required by Telegram)
+- **Bot not responding?** Check that `TELEGRAM_BOT_TOKEN` is set correctly
+- **Videos not sending?** Verify `NEXT_PUBLIC_BASE_URL` points to your deployed URL
+
 ## 📁 Project Structure
 
 ```

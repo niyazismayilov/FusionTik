@@ -142,18 +142,7 @@ async function tiktok(url: string) {
       if (audioUrls.length > 0) {
         audio = audioUrls[0]
       }
-      
-      console.log("=== TIKSAVE.IO EXTRACTION DEBUG ===")
-      console.log("All hrefs found:", hrefs)
-      console.log("Video URLs:", videoUrls)
-      console.log("Audio URLs:", audioUrls)
-      console.log("snapcdn URLs:", snapcdnUrls)
-      console.log("Other video URLs:", otherVideoUrls)
-      console.log("Final videos array:", videos)
-      console.log("Final audio:", audio)
-      console.log("===================================")
     } else {
-      console.log("=== FALLBACK: SEARCHING ALL HREFS ===")
       const allHrefs = [] as string[]
       const allHrefRegex = /href="([^"]+)"/g
       let m: RegExpExecArray | null
@@ -177,13 +166,6 @@ async function tiktok(url: string) {
       if (fallbackAudioUrls.length > 0) {
         audio = fallbackAudioUrls[0]
       }
-      
-      console.log("All hrefs in HTML:", allHrefs)
-      console.log("Fallback video URLs:", fallbackVideoUrls)
-      console.log("Fallback audio URLs:", fallbackAudioUrls)
-      console.log("Final fallback videos:", videos)
-      console.log("Final fallback audio:", audio)
-      console.log("===================================")
     }
   }
 
@@ -202,12 +184,14 @@ async function tiktok(url: string) {
   return { title, creator, thumbnail, videos, audio, slide }
 }
 
-export async function POST(req: Request) {
+// GET endpoint for Telegram bot (accepts URL as query parameter)
+export async function GET(req: Request) {
   try {
-    const { url } = await req.json()
+    const { searchParams } = new URL(req.url)
+    const url = searchParams.get("url")
 
     if (!url || typeof url !== "string") {
-      return NextResponse.json({ error: "Invalid TikTok URL" }, { status: 400 })
+      return NextResponse.json({ error: "Invalid TikTok URL. Provide ?url= parameter" }, { status: 400 })
     }
 
     let result: any
@@ -225,37 +209,38 @@ export async function POST(req: Request) {
     const description = result.title || ""
     const creator = result.creator || ""
 
-    const response: Record<string, any> = {
-      type: isPhoto ? "image" : "video",
-      images,
-      description,
-      creator,
+    // For Telegram bot, return simple response with video URL
+    if (isPhoto) {
+      return NextResponse.json({
+        success: true,
+        type: "image",
+        images: images,
+        description: description,
+        creator: creator,
+      })
     }
-    
-    if (!isPhoto) {
-      if (videos.length === 0) {
-        return NextResponse.json({ error: "No video URLs found in the TikSave response" }, { status: 500 })
-      }
-      
-      response.videos = videos
-      response.video = videos[0]
-      
-      const hdVideo = videos.find((url: string) => 
-        url.includes('snapcdn.app') || 
-        url.includes('hd') || 
-        url.includes('HD')
-      )
-      
-      if (hdVideo) {
-        response.videoHd = hdVideo
-      } else if (videos.length > 1) {
-        response.videoHd = videos[1]
-      }
+
+    if (videos.length === 0) {
+      return NextResponse.json({ error: "No video URLs found" }, { status: 500 })
     }
-    if (audioUrl) {
-      response.music = audioUrl
-    }
-    return NextResponse.json(response)
+
+    // Return the best quality video URL
+    const hdVideo = videos.find((url: string) => 
+      url.includes('snapcdn.app') || 
+      url.includes('hd') || 
+      url.includes('HD')
+    ) || videos[0]
+
+    return NextResponse.json({
+      success: true,
+      type: "video",
+      video: hdVideo,
+      videoUrl: hdVideo, // Alias for convenience
+      videos: videos, // All available video URLs
+      description: description,
+      creator: creator,
+      audio: audioUrl,
+    })
   } catch (err: any) {
     return NextResponse.json(
       { error: `Invalid request: ${err?.message || String(err)}` },
@@ -263,3 +248,69 @@ export async function POST(req: Request) {
     )
   }
 }
+
+// POST endpoint for Telegram bot (accepts URL in JSON body)
+export async function POST(req: Request) {
+  try {
+    const body = await req.json()
+    const url = body.url
+
+    if (!url || typeof url !== "string") {
+      return NextResponse.json({ error: "Invalid TikTok URL. Provide 'url' in JSON body" }, { status: 400 })
+    }
+
+    let result: any
+    try {
+      result = await tiktok(url)
+    } catch (err: any) {
+      const message = err?.message || String(err)
+      return NextResponse.json({ error: message }, { status: 500 })
+    }
+
+    const images: string[] = Array.isArray(result.slide) ? result.slide : []
+    const isPhoto = images.length > 0
+    const videos = result.videos || []
+    const audioUrl = result.audio || undefined
+    const description = result.title || ""
+    const creator = result.creator || ""
+
+    // For Telegram bot, return simple response with video URL
+    if (isPhoto) {
+      return NextResponse.json({
+        success: true,
+        type: "image",
+        images: images,
+        description: description,
+        creator: creator,
+      })
+    }
+
+    if (videos.length === 0) {
+      return NextResponse.json({ error: "No video URLs found" }, { status: 500 })
+    }
+
+    // Return the best quality video URL
+    const hdVideo = videos.find((url: string) => 
+      url.includes('snapcdn.app') || 
+      url.includes('hd') || 
+      url.includes('HD')
+    ) || videos[0]
+
+    return NextResponse.json({
+      success: true,
+      type: "video",
+      video: hdVideo,
+      videoUrl: hdVideo, // Alias for convenience
+      videos: videos, // All available video URLs
+      description: description,
+      creator: creator,
+      audio: audioUrl,
+    })
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: `Invalid request: ${err?.message || String(err)}` },
+      { status: 400 },
+    )
+  }
+}
+
