@@ -50,7 +50,7 @@ curl -X POST https://your-domain.com/api/telegram/set-webhook \
 #### Method 3: Using GET Request
 
 ```bash
-curl "https://your-domain.com/api/telegram/set-webhook?url=https://your-domain.com/api/telegram/webhook"
+curl "https://fusion-2zm098xz2-nismayilovs-projects.vercel.app/api/telegram/set-webhook?url=https://fusion-2zm098xz2-nismayilovs-projects.vercel.app/api/telegram/webhook"
 ```
 
 #### Method 4: Direct Telegram API
@@ -96,9 +96,37 @@ curl "https://api.telegram.org/bot8506385037:AAECCbrD9LO5gZ2pTNtEoiU5a8ZWOxOR5Qg
 - Check server logs for errors
 
 ### Webhook errors?
-- Ensure your server uses HTTPS (Telegram requirement)
+
+#### 401 Unauthorized Error
+If you see "401 Unauthorized" in webhook status:
+
+1. **Check Vercel Deployment Protection:**
+   - Go to your Vercel project settings
+   - Navigate to "Deployment Protection" or "Password Protection"
+   - Make sure it's **disabled** for the webhook endpoint
+   - If enabled, Telegram requests will be blocked
+
+2. **Verify Environment Variables:**
+   - Ensure `TELEGRAM_BOT_TOKEN` is set in Vercel environment variables
+   - Check that `NEXT_PUBLIC_BASE_URL` matches your deployed URL
+
+3. **Test the Endpoint:**
+   ```bash
+   curl -X POST https://fusion-2zm098xz2-nismayilovs-projects.vercel.app/api/telegram/webhook \
+     -H "Content-Type: application/json" \
+     -d '{"update_id": 1}'
+   ```
+   Should return: `{"ok":true}`
+
+4. **Check Vercel Logs:**
+   - Go to Vercel dashboard → Your project → Logs
+   - Look for any authentication or middleware errors
+
+#### Other Webhook Errors
+- Ensure your server uses HTTPS (required by Telegram)
 - Verify the webhook URL is accessible
 - Check that `NEXT_PUBLIC_BASE_URL` matches your deployed URL
+- Make sure there are no double slashes in the URL (`//api` should be `/api`)
 
 ### Videos not sending?
 - Verify the TikTok API endpoint is working: `/api/tiktok/telegram?url=<test_url>`
