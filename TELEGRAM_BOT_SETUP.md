@@ -8,7 +8,7 @@ Create a `.env.local` file in the root directory:
 
 ```env
 TELEGRAM_BOT_TOKEN=8506385037:AAECCbrD9LO5gZ2pTNtEoiU5a8ZWOxOR5Qg
-NEXT_PUBLIC_BASE_URL=https://your-domain.com
+NEXT_PUBLIC_BASE_URL=https://fusion-2zm098xz2-nismayilovs-projects.vercel.app
 TELEGRAM_CHANNEL_USERNAME=tik_save_videosbot
 ```
 
@@ -58,7 +58,7 @@ curl "https://your-domain.com/api/telegram/set-webhook?url=https://your-domain.c
 ```bash
 curl -X POST "https://api.telegram.org/bot8506385037:AAECCbrD9LO5gZ2pTNtEoiU5a8ZWOxOR5Qg/setWebhook" \
   -H "Content-Type: application/json" \
-  -d '{"url": "https://your-domain.com/api/telegram/webhook"}'
+  -d '{"url": "https://fusion-2zm098xz2-nismayilovs-projects.vercel.app/api/telegram/webhook"}'
 ```
 
 ### 4. Verify Webhook

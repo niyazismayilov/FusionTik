@@ -37,6 +37,11 @@ export default function WebhookManagementPage() {
     return ""
   }
 
+  // Normalize URL to prevent double slashes
+  const normalizeUrl = (url: string) => {
+    return url.replace(/([^:]\/)\/+/g, "$1")
+  }
+
   // Load webhook info on mount
   useEffect(() => {
     loadWebhookInfo()
@@ -54,15 +59,15 @@ export default function WebhookManagementPage() {
           setWebhookUrl(data.webhookInfo.url)
         } else {
           // Set default webhook URL
-          setWebhookUrl(`${getBaseUrl()}/api/telegram/webhook`)
+          setWebhookUrl(normalizeUrl(`${getBaseUrl()}/api/telegram/webhook`))
         }
       } else {
         // Set default if no webhook is set
-        setWebhookUrl(`${getBaseUrl()}/api/telegram/webhook`)
+        setWebhookUrl(normalizeUrl(`${getBaseUrl()}/api/telegram/webhook`))
       }
     } catch (err: any) {
       console.error("Error loading webhook info:", err)
-      setWebhookUrl(`${getBaseUrl()}/api/telegram/webhook`)
+      setWebhookUrl(normalizeUrl(`${getBaseUrl()}/api/telegram/webhook`))
     } finally {
       setIsLoadingInfo(false)
     }
@@ -74,6 +79,10 @@ export default function WebhookManagementPage() {
       return
     }
 
+    // Normalize URL before sending
+    const normalizedUrl = normalizeUrl(webhookUrl.trim())
+    setWebhookUrl(normalizedUrl)
+
     setIsLoading(true)
     setError(null)
     setSuccess(null)
@@ -84,7 +93,7 @@ export default function WebhookManagementPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ url: webhookUrl }),
+        body: JSON.stringify({ url: normalizedUrl }),
       })
 
       const data = await response.json()
@@ -357,7 +366,7 @@ export default function WebhookManagementPage() {
               variant="outline"
               className="w-full justify-start"
               onClick={() => {
-                setWebhookUrl(`${getBaseUrl()}/api/telegram/webhook`)
+                setWebhookUrl(normalizeUrl(`${getBaseUrl()}/api/telegram/webhook`))
                 toast({
                   title: "URL Updated",
                   description: "Webhook URL set to default",

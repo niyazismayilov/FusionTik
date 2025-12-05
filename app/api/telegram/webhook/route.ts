@@ -13,16 +13,14 @@ import {
 const BOT_USERNAME = "tik_save_videosbot"
 const CHANNEL_USERNAME = process.env.TELEGRAM_CHANNEL_USERNAME || "tik_save_videosbot"
 
-export async function POST(req: Request) {
+// Process update asynchronously
+async function processUpdate(update: TelegramUpdate) {
   try {
-    const update: TelegramUpdate = await req.json()
-
     // Handle callback queries (button clicks)
     if (update.callback_query) {
       const callbackQuery = update.callback_query
       const chatId = callbackQuery.from.id
       const callbackData = callbackQuery.data
-      const messageId = callbackQuery.message?.message_id
 
       // Answer the callback query
       await answerCallbackQuery(callbackQuery.id)
@@ -34,7 +32,7 @@ export async function POST(req: Request) {
           `https://t.me/${BOT_USERNAME}?start=ref_${chatId}\n\n` +
           `Thank you for sharing! 🙏`
         )
-        return NextResponse.json({ ok: true })
+        return
       }
 
       if (callbackData === "rate") {
@@ -44,7 +42,7 @@ export async function POST(req: Request) {
           `Your feedback helps us improve. Thank you! 🙏\n\n` +
           `https://t.me/${BOT_USERNAME}`
         )
-        return NextResponse.json({ ok: true })
+        return
       }
 
       if (callbackData === "join_channel") {
@@ -53,15 +51,15 @@ export async function POST(req: Request) {
           `📢 Join our channel for updates and more content!\n\n` +
           `https://t.me/${CHANNEL_USERNAME}`
         )
-        return NextResponse.json({ ok: true })
+        return
       }
 
-      return NextResponse.json({ ok: true })
+      return
     }
 
     // Handle messages
     if (!update.message || !update.message.text) {
-      return NextResponse.json({ ok: true })
+      return
     }
 
     const chatId = update.message.chat.id
@@ -89,7 +87,7 @@ export async function POST(req: Request) {
       }
 
       await sendMessage(chatId, welcomeMessage, undefined, inlineKeyboard)
-      return NextResponse.json({ ok: true })
+      return
     }
 
     // Handle /help command
@@ -108,7 +106,7 @@ export async function POST(req: Request) {
         "/start - Start the bot\n" +
         "/help - Show this help message"
       )
-      return NextResponse.json({ ok: true })
+      return
     }
 
     // Extract TikTok URL from message
@@ -119,7 +117,7 @@ export async function POST(req: Request) {
         chatId,
         "❌ Invalid TikTok link.\n\nSend a valid TikTok video URL."
       )
-      return NextResponse.json({ ok: true })
+      return
     }
 
     // Send processing message
@@ -177,7 +175,7 @@ export async function POST(req: Request) {
           "✅ Leave a ⭐⭐⭐⭐⭐ review"
 
         await sendMessage(chatId, viralMessage)
-        return NextResponse.json({ ok: true })
+        return
       }
 
       // Handle image response
@@ -215,12 +213,11 @@ export async function POST(req: Request) {
           "✅ Leave a ⭐⭐⭐⭐⭐ review"
 
         await sendMessage(chatId, viralMessage)
-        return NextResponse.json({ ok: true })
+        return
       }
 
       // Unknown response type
       await sendMessage(chatId, "⚠️ Could not download video.\n\nPlease try again later.")
-      return NextResponse.json({ ok: true })
 
     } catch (error: any) {
       // Delete processing message
@@ -251,12 +248,29 @@ export async function POST(req: Request) {
           "⚠️ Could not download video.\n\nPlease try again later."
         )
       }
-      
-      return NextResponse.json({ ok: true })
     }
   } catch (error: any) {
+    console.error("Error processing update:", error)
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    // Parse the update
+    const update: TelegramUpdate = await req.json()
+    
+    // Return 200 OK immediately to Telegram
+    // Process the update asynchronously in the background
+    processUpdate(update).catch((error) => {
+      console.error("Error in background update processing:", error)
+    })
+    
+    // Return success response immediately
+    return NextResponse.json({ ok: true })
+  } catch (error: any) {
     console.error("Webhook error:", error)
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
+    // Still return 200 OK to prevent Telegram from retrying
+    return NextResponse.json({ ok: true })
   }
 }
 

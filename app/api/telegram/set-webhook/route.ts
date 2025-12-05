@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server"
 import { setWebhook } from "@/lib/telegram"
 
+// Normalize URL to prevent double slashes
+function normalizeUrl(url: string): string {
+  return url.replace(/([^:]\/)\/+/g, "$1")
+}
+
 export async function POST(req: Request) {
   try {
     const { url } = await req.json()
@@ -12,12 +17,14 @@ export async function POST(req: Request) {
       )
     }
 
-    const result = await setWebhook(url)
+    // Normalize URL before setting
+    const normalizedUrl = normalizeUrl(url.trim())
+    const result = await setWebhook(normalizedUrl)
 
     return NextResponse.json({
       success: result.ok,
       message: result.ok 
-        ? `Webhook set successfully to: ${url}`
+        ? `Webhook set successfully to: ${normalizedUrl}`
         : result.description || "Failed to set webhook",
       result: result,
     })
@@ -41,12 +48,14 @@ export async function GET(req: Request) {
   }
 
   try {
-    const result = await setWebhook(url)
+    // Normalize URL before setting
+    const normalizedUrl = normalizeUrl(url.trim())
+    const result = await setWebhook(normalizedUrl)
 
     return NextResponse.json({
       success: result.ok,
       message: result.ok 
-        ? `Webhook set successfully to: ${url}`
+        ? `Webhook set successfully to: ${normalizedUrl}`
         : result.description || "Failed to set webhook",
       result: result,
     })
