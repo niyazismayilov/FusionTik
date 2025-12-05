@@ -10,6 +10,10 @@ import {
   type TelegramUpdate 
 } from "@/lib/telegram"
 
+// Ensure this route is publicly accessible
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
 const BOT_USERNAME = "tik_save_videosbot"
 const CHANNEL_USERNAME = process.env.TELEGRAM_CHANNEL_USERNAME || "tik_save_videosbot"
 
@@ -256,28 +260,60 @@ async function processUpdate(update: TelegramUpdate) {
 
 export async function POST(req: Request) {
   try {
+    // Log incoming request for debugging
+    const userAgent = req.headers.get('user-agent') || 'unknown'
+    const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
+    
+    console.log(`[Webhook] Incoming request from ${ip}, User-Agent: ${userAgent}`)
+    
     // Parse the update
-    const update: TelegramUpdate = await req.json()
+    let update: TelegramUpdate
+    try {
+      update = await req.json()
+    } catch (parseError: any) {
+      console.error("[Webhook] JSON parse error:", parseError)
+      // Return 200 OK even on parse error to prevent Telegram retries
+      return NextResponse.json({ ok: true, error: "Invalid JSON" })
+    }
+    
+    // Validate update structure
+    if (!update || (!update.message && !update.callback_query)) {
+      console.log("[Webhook] Empty or invalid update received")
+      return NextResponse.json({ ok: true })
+    }
     
     // Return 200 OK immediately to Telegram
     // Process the update asynchronously in the background
     processUpdate(update).catch((error) => {
-      console.error("Error in background update processing:", error)
+      console.error("[Webhook] Error in background update processing:", error)
     })
     
     // Return success response immediately
-    return NextResponse.json({ ok: true })
+    return NextResponse.json({ ok: true }, { status: 200 })
   } catch (error: any) {
-    console.error("Webhook error:", error)
-    // Still return 200 OK to prevent Telegram from retrying
-    return NextResponse.json({ ok: true })
+    console.error("[Webhook] Unexpected error:", error)
+    // Always return 200 OK to prevent Telegram from retrying
+    return NextResponse.json({ ok: true }, { status: 200 })
   }
 }
 
 // GET endpoint for webhook verification (optional)
 export async function GET(req: Request) {
   return NextResponse.json({ 
+    ok: true,
     message: "Telegram webhook endpoint is active",
     timestamp: new Date().toISOString()
+  }, { status: 200 })
+}
+
+// OPTIONS handler for CORS preflight
+export async function OPTIONS(req: Request) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
   })
 }
